@@ -10,8 +10,8 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "docker:build": "docker build -t splitwise-to-toshl .",
-    "docker:buildx": "docker buildx build --platform linux/amd64 -t splitwise-to-toshl . --load",
+    "docker:build": "yarn build && docker build -t splitwise-to-toshl .",
+    "docker:buildx": "yarn build && docker buildx build --platform linux/amd64 -t splitwise-to-toshl . --load",
     "docker:run": "docker run -p 2567:2567 splitwise-to-toshl",
     "docker:save": "docker save -o splitwise-to-toshl.tar splitwise-to-toshl"
   },

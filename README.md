@@ -78,7 +78,7 @@ Save the docker image
 
 Upload the docker image to the server
 
-`rsync -azP splitwise-to-toshl.tar root@xunling.art:/root/projects/splitwise-to-toshl/`
+`rsync -azP splitwise-to-toshl.tar user@your-server.com:/root/projects/splitwise-to-toshl/`
 
 Load the docker image on the server
 

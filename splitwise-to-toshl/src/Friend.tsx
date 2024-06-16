@@ -10,7 +10,11 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ToshlExpense, useUserAccounts } from "./hooks/useAccounts";
+import {
+  AccountState,
+  ToshlExpense,
+  useUserAccounts,
+} from "./hooks/useAccounts";
 
 import { AddExpenseForm } from "./components/AddExpenseForm";
 import { Expense, ExpenseListItem } from "./components/ExpenseListItem";
@@ -33,12 +37,12 @@ export function Friend() {
   const count = 30;
   const [showInvolved, setShowInvolved] = useState(true);
 
-  const { userAccounts, accountsSet, loadUserAccounts, selectedTag } =
+  const { userAccounts, accountState, loadUserAccounts, selectedTag } =
     useUserAccounts();
   const navigate = useNavigate();
   useEffect(() => {
     async function checkUserAccount() {
-      if (!accountsSet) {
+      if (accountState !== AccountState.SET) {
         if (!(await loadUserAccounts())) {
           navigate("/");
         }
@@ -46,7 +50,7 @@ export function Friend() {
       return true;
     }
     checkUserAccount();
-  }, [accountsSet, loadUserAccounts, navigate]);
+  }, [accountState, loadUserAccounts, navigate]);
 
   useEffect(() => {
     if (!latestExpenseDate || !selectedTag) {

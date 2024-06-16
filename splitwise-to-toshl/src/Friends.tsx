@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUserAccounts } from "./hooks/useAccounts";
+import { AccountState, useUserAccounts } from "./hooks/useAccounts";
 
 export type SplitwiseFriend = {
   id: string;
@@ -32,10 +32,10 @@ const FriendRow = styled(Box)`
 export function Friends() {
   const [friends, setFriends] = useState<SplitwiseFriend[]>([]);
   const navigate = useNavigate();
-  const { accountsSet, loadUserAccounts } = useUserAccounts();
+  const { accountState, loadUserAccounts } = useUserAccounts();
   useEffect(() => {
     async function checkUserAccount() {
-      if (!accountsSet) {
+      if (accountState !== AccountState.SET) {
         if (!(await loadUserAccounts())) {
           navigate("/");
         }
@@ -43,7 +43,7 @@ export function Friends() {
       return true;
     }
     checkUserAccount();
-  }, [accountsSet, loadUserAccounts, navigate]);
+  }, [accountState, loadUserAccounts, navigate]);
 
   useEffect(() => {
     fetch("/api/splitwise/v3.0/get_friends", {
