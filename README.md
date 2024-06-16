@@ -86,7 +86,7 @@ Load the docker image on the server
 
 Run the docker container on the server
 
-`docker run -d -p 2567:2567 splitwise-to-toshl`
+`docker run -d -p 5544:5544 splitwise-to-toshl`
 
 Accessing files in the container
 
