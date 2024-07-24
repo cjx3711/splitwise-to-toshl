@@ -6,7 +6,7 @@ Originally this was a command line application, but since python 3.12, something
 
 # Stack
 
-Vite + React + TypeScript + TailwindCSS
+Vite + React + TypeScript + MUI + Express
 
 Requires Node 20.0.0 or higher.
 
@@ -16,11 +16,11 @@ Requires Node 20.0.0 or higher.
 
 Runs a vite server on port 5554, and an express server on 5544 which acts as a proxy for the toshl and splitwise APIs.
 
-The vite dev server on 5554 has a proxy to port 5544 which allows the frontend to make requests to the backend on the same port.
+The vite dev server on 5554 has a proxy to port 5544 which allows the frontend to make requests to the backend on port 5554.
 
 ## Production
 
-After building the frontend, the express server will serve both the proxy and the frontend on port 5544.
+After building the frontend, the express server will serve both the proxy and the frontend on port 5544. Since the server serves on port 5554, but all other routes will be directed to the /dist/ folder.
 
 This will then be copied into a docker container and deployed on the digital ocean server.
 
@@ -61,24 +61,35 @@ Build the docker file
 
 docker buildx create --name mybuilder --platform linux/amd64
 docker buildx use mybuilder
-docker buildx build --platform linux/amd64 -t splitwise-to-toshl .
+docker buildx build --platform linux/amd64 -t splitwise-to-toshl . --load
 
 # Otherwise the normal build command will work if you want to run it on your local machine or a server with the same architecture.
 
 docker build -t splitwise-to-toshl .
 ```
 
-Run the docker container and map the port (to make sure it's working)
+Run the docker container and map the port to make sure it's working
+(This only works if you built it on the same architecture)
 
-`docker run -p 2922:2922 splitwise-to-toshl`
+`docker run -p 5544:5544 splitwise-to-toshl`
 
 Save the docker image
+(Make sure you built the image on the same architecture as the server)
 
 `docker save -o splitwise-to-toshl.tar splitwise-to-toshl`
 
 Upload the docker image to the server
 
 `rsync -azP splitwise-to-toshl.tar user@your-server.com:/root/projects/splitwise-to-toshl/`
+
+## On the server
+
+Optional: Check if an existing container is running
+`docker ps`
+
+Optional: Stop the existing container
+`docker stop <container_id>`
+`docker rm <container_id>`
 
 Load the docker image on the server
 
