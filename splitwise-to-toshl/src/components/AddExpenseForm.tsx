@@ -8,7 +8,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import CloseIcon from "@mui/icons-material/Close";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
@@ -52,27 +52,33 @@ export function AddExpenseForm({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [addingExpense, setAddingExpense] = useState(false);
-  // useEffect(() => {
-  //   console.log("Adding event listener");
-  //   window.addEventListener("keydown", (e) => {
-  //     if (e.key.toLowerCase().includes("left")) {
-  //       if (hasPrevious) {
-  //         previousExpense();
-  //       }
-  //     }
-  //     if (e.key.toLowerCase().includes("right")) {
-  //       if (hasNext) {
-  //         nextExpense();
-  //       }
-  //     }
-  //   });
-  //   return () => {
-  //     console.log("Removing event listener");
-  //     window.removeEventListener("keydown", () => {});
-  //   };
-  // }, [closeModal, hasNext, hasPrevious, nextExpense, previousExpense]);
+
+  const keydownEventListener = (e: KeyboardEvent) => {
+    if (e.key.toLowerCase().includes("left")) {
+      previousExpense();
+    }
+    if (e.key.toLowerCase().includes("right")) {
+      nextExpense();
+    }
+    if (e.shiftKey && e.key.toLowerCase().includes("enter")) {
+      console.log("Enter something");
+      addExpenseToToshl();
+      e.preventDefault();
+    }
+  };
+
+  useEffect(() => {
+    console.log("Adding event listener");
+    window.addEventListener("keydown", keydownEventListener);
+    return () => {
+      console.log("Removing event listener");
+      window.removeEventListener("keydown", keydownEventListener);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expense]);
 
   const addExpenseToToshl = async () => {
+    if (!selectedCategory || addingExpense) return;
     if (toshlExists) {
       if (!window.confirm("This expense already exists in Toshl. Continue?")) {
         return;
@@ -279,48 +285,80 @@ export function AddExpenseForm({
                 flexGrow: 1,
               }}></Box>
           )}
-          <Button
-            disabled={!hasPrevious || addingExpense}
-            size="large"
-            variant="contained"
-            color="secondary"
-            tabIndex={3}
-            sx={{
-              px: 4,
-            }}
-            onClick={() => {
-              previousExpense();
-            }}>
-            Prev
-          </Button>
-          <Button
-            disabled={!hasNext || addingExpense}
-            size="large"
-            variant="contained"
-            color="secondary"
-            tabIndex={3}
-            sx={{
-              px: 4,
-            }}
-            onClick={() => {
-              nextExpense();
-            }}>
-            Next
-          </Button>
-          <Button
-            disabled={!selectedCategory || addingExpense}
-            size="large"
-            variant="contained"
-            color="primary"
-            tabIndex={3}
-            sx={{
-              px: 4,
-            }}
-            onClick={() => {
-              addExpenseToToshl();
-            }}>
-            {addingExpense ? "Adding..." : "Add"}
-          </Button>
+          <Stack direction={"column"} gap={1} alignItems={"center"}>
+            <Button
+              disabled={!hasPrevious || addingExpense}
+              size="large"
+              variant="contained"
+              color="info"
+              tabIndex={3}
+              sx={{
+                px: 4,
+              }}
+              onClick={() => {
+                previousExpense();
+              }}>
+              Prev
+            </Button>
+            <Typography
+              variant="caption"
+              color={"grey"}
+              sx={{
+                textTransform: "uppercase",
+              }}>
+              Left Arrow
+            </Typography>
+          </Stack>
+          <Stack direction={"column"} gap={1} alignItems={"center"}>
+            <Button
+              disabled={!hasNext || addingExpense}
+              size="large"
+              variant="contained"
+              color="info"
+              tabIndex={3}
+              sx={{
+                px: 4,
+              }}
+              onClick={() => {
+                nextExpense();
+              }}>
+              Next
+            </Button>
+            <Typography
+              variant="caption"
+              color={"grey"}
+              sx={{
+                textTransform: "uppercase",
+              }}>
+              Right Arrow
+            </Typography>
+          </Stack>
+          <Stack direction={"column"} gap={1} alignItems={"center"}>
+            <Button
+              disabled={!selectedCategory || addingExpense}
+              size="large"
+              variant="contained"
+              color="primary"
+              tabIndex={3}
+              sx={{
+                px: 5,
+                ml: 2,
+              }}
+              onClick={() => {
+                addExpenseToToshl();
+              }}>
+              {addingExpense ? "Adding..." : "Add"}
+            </Button>
+            <Typography
+              variant="caption"
+              color={"grey"}
+              sx={{
+                ml: 2,
+                textTransform: "uppercase",
+              }}>
+              Shift + Enter
+            </Typography>
+          </Stack>
         </Stack>
       </Stack>
     </Box>

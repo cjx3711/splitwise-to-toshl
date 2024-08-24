@@ -9,7 +9,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "@emotion/react";
-import { AppBar, createTheme, Stack } from "@mui/material";
+import { AppBar, colors, createTheme, Stack } from "@mui/material";
 import { Copyright } from "./Copyright.tsx";
 import { Settings } from "./Settings.tsx";
 import { Friends } from "./Friends.tsx";
@@ -39,7 +39,22 @@ const router = createBrowserRouter([
   },
 ]);
 
-const defaultTheme = createTheme();
+const defaultTheme = createTheme({
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        containedInfo: {
+          background: "#fff",
+          color: "#000",
+          "&:hover": {
+            background: "#eee",
+            color: "#000",
+          },
+        },
+      },
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
