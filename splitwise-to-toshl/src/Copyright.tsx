@@ -9,6 +9,9 @@ export function Copyright() {
       </Link>{" "}
       {new Date().getFullYear()}
       {"."}
+      <Typography variant="caption" marginLeft={2}>
+        v1.0.1
+      </Typography>
     </Typography>
   );
 }

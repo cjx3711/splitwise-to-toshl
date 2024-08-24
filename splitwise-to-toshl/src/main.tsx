@@ -116,7 +116,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                   : theme.palette.grey[800],
             }}>
             <Container maxWidth="sm">
-              <Typography variant="body1">Hello, I am a footer</Typography>
+              <Typography variant="body1">
+                Coded haphazardly by CJX3711
+              </Typography>
               <Copyright />
             </Container>
           </Box>
