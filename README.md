@@ -36,15 +36,16 @@ Install dependencies
 yarn
 ```
 
-Run the frontend in one terminal
+Run the development frontend and server with one command
 
 ```
 yarn dev
 ```
 
-Run the server in another terminal
+Alternatively, you could run them separately in two different terminals
 
 ```
+yarn dev:client
 yarn dev:server
 ```
 

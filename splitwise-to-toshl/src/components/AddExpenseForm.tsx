@@ -222,6 +222,7 @@ export function AddExpenseForm({
           onChange={(_, value) => {
             setSelectedCategory(value?.id);
           }}
+          autoHighlight={true}
           tabIndex={0}
           renderInput={(params) => <TextField {...params} label="Category" />}
         />
@@ -235,6 +236,7 @@ export function AddExpenseForm({
           onChange={(_, value) => {
             setSelectedTags(value.map((v) => v.id));
           }}
+          autoHighlight={true}
           tabIndex={1}
           renderInput={(params) => (
             <TextField {...params} label="Tags" placeholder="Select tags" />

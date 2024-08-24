@@ -53,7 +53,10 @@ function Home() {
       <Box sx={{ mt: 5 }}>
         {accountState === AccountState.INVALID && (
           <Typography variant="body1" component="div" gutterBottom color="red">
-            <div>Invalid API Keys, please set them again</div>
+            <div>Could not reach toshl or splitwise servers</div>
+            <div>
+              Either your keys are invalid, or the internet isn't working
+            </div>
           </Typography>
         )}
         {accountState === AccountState.LOADING ? (
