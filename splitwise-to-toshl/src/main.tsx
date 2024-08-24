@@ -1,20 +1,20 @@
+import Container from "@mui/material/Container";
+import Typography from "@mui/material/Typography";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import Home from "./Home.tsx";
-import Container from "@mui/material/Container";
-import Typography from "@mui/material/Typography";
 
 import CssBaseline from "@mui/material/CssBaseline";
 // import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@emotion/react";
+import { AppBar, createTheme, Stack } from "@mui/material";
 import Box from "@mui/material/Box";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ThemeProvider } from "@emotion/react";
-import { AppBar, colors, createTheme, Stack } from "@mui/material";
 import { Copyright } from "./Copyright.tsx";
-import { Settings } from "./Settings.tsx";
-import { Friends } from "./Friends.tsx";
 import { Friend } from "./Friend.tsx";
+import { Friends } from "./Friends.tsx";
 import { UserAccountsProvider } from "./hooks/useAccounts.tsx";
+import { Settings } from "./Settings.tsx";
 
 const router = createBrowserRouter([
   {

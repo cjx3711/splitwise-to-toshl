@@ -70,7 +70,7 @@ docker build -t splitwise-to-toshl .
 ```
 
 Run the docker container and map the port to make sure it's working
-(This only works if you built it on the same architecture)
+(This works best if you built it on the same architecture. An ARM architecture can emulate an x86 one.)
 
 `docker run -p 5544:5544 splitwise-to-toshl`
 
@@ -82,6 +82,10 @@ Save the docker image
 Upload the docker image to the server
 
 `rsync -azP splitwise-to-toshl.tar user@your-server.com:/root/projects/splitwise-to-toshl/`
+
+Delete the tar file
+
+`rm splitwise-to-toshl.tar`
 
 ## On the server
 
