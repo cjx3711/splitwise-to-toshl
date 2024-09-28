@@ -1,9 +1,11 @@
-FROM node:18-alpine
+FROM node:20-alpine AS build
 WORKDIR /usr/src/app
 COPY package*.json ./
+RUN yarn install --production --frozen-lockfile
 COPY . .
 
-RUN yarn install --production && yarn cache clean
-
+FROM node:20-alpine
+WORKDIR /usr/src/app
+COPY --from=build /usr/src/app .
 EXPOSE 5544
 CMD ["node", "server.js"]

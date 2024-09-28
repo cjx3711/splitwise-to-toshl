@@ -12,8 +12,11 @@
     "preview": "vite preview",
     "docker:build": "yarn build && docker build -t splitwise-to-toshl .",
     "docker:buildx": "yarn build && docker buildx build --platform linux/amd64 -t splitwise-to-toshl . --load",
-    "docker:run": "docker run -p 2567:2567 splitwise-to-toshl",
-    "docker:save": "docker save -o splitwise-to-toshl.tar splitwise-to-toshl"
+    "docker:run": "docker run --name splitwise-to-toshl -d -p 5544:5544 splitwise-to-toshl",
+    "docker:save": "docker save -o splitwise-to-toshl.tar splitwise-to-toshl",
+    "docker:rsync": "rsync -avzP splitwise-to-toshl.tar root@cjx3711.com:/root/projects/splitwise-to-toshl/splitwise-to-toshl.tar",
+    "delete-tar": "rm splitwise-to-toshl.tar",
+    "docker:buildx:upload": "yarn docker:buildx && yarn docker:save && yarn docker:rsync && yarn delete-tar"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
