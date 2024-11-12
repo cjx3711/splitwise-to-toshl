@@ -33,6 +33,8 @@ function Home() {
         Splitwise to Toshl
       </Typography>
 
+      <img src="/logo.png" alt="Splitwise to Toshl" width={100} height={100} />
+
       <Typography variant="h6" component="h2" gutterBottom>
         This is a tool to transfer your Splitwise transactions to Toshl.
       </Typography>
