@@ -70,6 +70,8 @@ type UserAccountsContextType = {
   loadUserAccounts: () => Promise<boolean>;
   setSelectedTag(id: string): void;
   selectedTag: ToshlTag | undefined;
+  setBulkAddTag(id: string): void;
+  bulkAddTag: ToshlTag | undefined;
   totalTags: number;
   totalCategories: number;
   categories: ToshlCategory[];
@@ -100,6 +102,9 @@ export const UserAccountsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [tags, setTags] = useState<ToshlTag[]>([]);
   const [selectedTagId, setSelectedTagId] = useState<string>(
     localStorage.getItem("selectedTag") || ""
+  );
+  const [bulkAddTagId, setBulkAddTagId] = useState<string>(
+    localStorage.getItem("bulkAddTag") || ""
   );
 
   const [accountState, setAccountState] = useState<AccountState>(
@@ -232,14 +237,20 @@ export const UserAccountsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const setSelectedTag = useCallback(
     (id: string) => {
-      // Check if tag exists
       const tag = tags.find((t) => t.id === id);
-      if (!tag) {
-        return;
-      }
-
+      if (!tag) return;
       setSelectedTagId(id);
       localStorage.setItem("selectedTag", id);
+    },
+    [tags]
+  );
+
+  const setBulkAddTag = useCallback(
+    (id: string) => {
+      const tag = tags.find((t) => t.id === id);
+      if (!tag) return;
+      setBulkAddTagId(id);
+      localStorage.setItem("bulkAddTag", id);
     },
     [tags]
   );
@@ -247,6 +258,10 @@ export const UserAccountsProvider: React.FC<{ children: React.ReactNode }> = ({
   const selectedTag = useMemo(() => {
     return tags.find((t) => t.id === selectedTagId);
   }, [tags, selectedTagId]);
+
+  const bulkAddTag = useMemo(() => {
+    return tags.find((t) => t.id === bulkAddTagId);
+  }, [tags, bulkAddTagId]);
 
   const allTags = useMemo(() => {
     return tags;
@@ -261,6 +276,8 @@ export const UserAccountsProvider: React.FC<{ children: React.ReactNode }> = ({
     categories: cats,
     setSelectedTag,
     selectedTag,
+    setBulkAddTag,
+    bulkAddTag,
     allTags,
   };
 

@@ -1,4 +1,4 @@
-import { ToshlCategory, ToshlTag } from "../../hooks/useAccounts";
+import { ToshlCategory, ToshlExpense, ToshlTag } from "../../hooks/useAccounts";
 
 // --- Types ---
 
@@ -28,6 +28,10 @@ export type BulkAddState = {
   selectedIds: Set<string>;
   promptModalOpen: boolean;
   parseErrors: string[];
+  duplicateCheckedIds: Set<string>;
+  duplicateMatches: Map<string, ToshlExpense[]>;
+  isLoadingDuplicates: boolean;
+  duplicateCheckComplete: boolean;
 };
 
 // --- Utility functions ---

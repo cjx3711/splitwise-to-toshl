@@ -9,6 +9,8 @@ Originally this was a command line application, but since python 3.12, something
 - `webapp/` — The main web application (Vite + React + TypeScript + MUI + Express)
 - `old_python/` — Legacy CLI tool written in Python. No longer actively maintained but kept for reference. See its own [README](old_python/README.md) for usage instructions.
 
+For webapp code quality and review criteria, see the [Code styleguide](CODE_STYLEGUIDE.md).
+
 # Stack
 
 Vite + React + TypeScript + MUI + Express

@@ -11,7 +11,7 @@ import {
   Stepper,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { AccountState, useUserAccounts } from "./hooks/useAccounts";
+import { AccountState, ToshlExpense, useUserAccounts } from "./hooks/useAccounts";
 import {
   BulkAddState,
   BulkAddStep,
@@ -36,6 +36,7 @@ export type BulkAddAction =
   | { type: "SELECT_ALL" }
   | { type: "DESELECT_ALL" }
   | { type: "UPDATE_DESCRIPTION"; id: string; description: string }
+  | { type: "UPDATE_AMOUNT"; id: string; amount: number; currency: string }
   | {
       type: "SET_ROW_CATEGORY";
       id: string;
@@ -50,7 +51,13 @@ export type BulkAddAction =
     }
   | { type: "BULK_ADD_TAGS"; tags: BulkTagEntry[] }
   | { type: "BULK_REMOVE_TAG"; rowId: string; tagIndex: number }
-  | { type: "REMOVE_SELECTED_ROWS" };
+  | { type: "REMOVE_SELECTED_ROWS" }
+  | { type: "TOGGLE_DUPLICATE_CHECKED"; id: string }
+  | { type: "SELECT_ALL_DUPLICATES" }
+  | { type: "DESELECT_ALL_DUPLICATES" }
+  | { type: "SET_DUPLICATE_MATCHES"; matches: Map<string, ToshlExpense[]> }
+  | { type: "SET_DUPLICATE_CHECK_LOADING"; loading: boolean }
+  | { type: "SET_DUPLICATE_CHECK_COMPLETE" };
 
 const initialState: BulkAddState = {
   activeStep: 0,
@@ -59,6 +66,10 @@ const initialState: BulkAddState = {
   selectedIds: new Set(),
   promptModalOpen: false,
   parseErrors: [],
+  duplicateCheckedIds: new Set(),
+  duplicateMatches: new Map(),
+  isLoadingDuplicates: false,
+  duplicateCheckComplete: false,
 };
 
 function updateRow(
@@ -79,7 +90,10 @@ function reducer(state: BulkAddState, action: BulkAddAction): BulkAddState {
         ...state,
         rows: action.rows,
         parseErrors: action.errors,
-        selectedIds: new Set(),
+        selectedIds: new Set(action.rows.map((r) => r._id)),
+        duplicateCheckedIds: new Set(),
+        duplicateMatches: new Map(),
+        duplicateCheckComplete: false,
       };
 
     case "SET_STEP":
@@ -110,6 +124,16 @@ function reducer(state: BulkAddState, action: BulkAddAction): BulkAddState {
         rows: updateRow(state.rows, action.id, (r) => ({
           ...r,
           description: action.description,
+        })),
+      };
+
+    case "UPDATE_AMOUNT":
+      return {
+        ...state,
+        rows: updateRow(state.rows, action.id, (r) => ({
+          ...r,
+          amount: action.amount,
+          currency: action.currency.toUpperCase(),
         })),
       };
 
@@ -200,6 +224,33 @@ function reducer(state: BulkAddState, action: BulkAddAction): BulkAddState {
         selectedIds: new Set(),
       };
 
+    case "TOGGLE_DUPLICATE_CHECKED": {
+      const next = new Set(state.duplicateCheckedIds);
+      if (next.has(action.id)) next.delete(action.id);
+      else next.add(action.id);
+      return { ...state, duplicateCheckedIds: next };
+    }
+
+    case "SELECT_ALL_DUPLICATES":
+      return {
+        ...state,
+        duplicateCheckedIds: new Set(
+          state.rows.filter((r) => state.selectedIds.has(r._id)).map((r) => r._id)
+        ),
+      };
+
+    case "DESELECT_ALL_DUPLICATES":
+      return { ...state, duplicateCheckedIds: new Set() };
+
+    case "SET_DUPLICATE_MATCHES":
+      return { ...state, duplicateMatches: action.matches };
+
+    case "SET_DUPLICATE_CHECK_LOADING":
+      return { ...state, isLoadingDuplicates: action.loading };
+
+    case "SET_DUPLICATE_CHECK_COMPLETE":
+      return { ...state, duplicateCheckComplete: true };
+
     default:
       return state;
   }
@@ -213,7 +264,18 @@ export function BulkAdd() {
   const navigate = useNavigate();
   const { accountState, categories, allTags } = useUserAccounts();
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { activeStep, csvText, rows, selectedIds, promptModalOpen, parseErrors } = state;
+  const {
+    activeStep,
+    csvText,
+    rows,
+    selectedIds,
+    promptModalOpen,
+    parseErrors,
+    duplicateCheckedIds,
+    duplicateMatches,
+    isLoadingDuplicates,
+    duplicateCheckComplete,
+  } = state;
 
   useEffect(() => {
     if (
@@ -269,11 +331,23 @@ export function BulkAdd() {
         )}
 
         {activeStep === 2 && (
-          <StepDuplicateCheck rowCount={rows.length} dispatch={dispatch} />
+          <StepDuplicateCheck
+            rows={rows.filter((r) => selectedIds.has(r._id))}
+            duplicateCheckedIds={duplicateCheckedIds}
+            duplicateMatches={duplicateMatches}
+            isLoadingDuplicates={isLoadingDuplicates}
+            duplicateCheckComplete={duplicateCheckComplete}
+            dispatch={dispatch}
+          />
         )}
 
         {activeStep === 3 && (
-          <StepSummary rowCount={rows.length} dispatch={dispatch} />
+          <StepSummary
+            rows={rows}
+            selectedIds={selectedIds}
+            duplicateCheckedIds={duplicateCheckedIds}
+            dispatch={dispatch}
+          />
         )}
       </Stack>
 

@@ -1,13 +1,16 @@
 import {
   Box,
   Button,
+  Chip,
   Container,
   Input,
   InputLabel,
+  Stack,
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TagSelectionModal } from "./components/bulkAdd/TagSelectionModal";
 import { useUserAccounts } from "./hooks/useAccounts";
 
 const last10Characters = (str: string | null) => {
@@ -25,8 +28,17 @@ export function Settings() {
   const placeholderSplitwise = localStorage.getItem("splitwiseAPIKey") || "";
   const placeholderToshl = localStorage.getItem("toshlAPIKey") || "";
 
-  const { selectedTag, setSelectedTag, allTags, loadUserAccounts } =
-    useUserAccounts();
+  const {
+    selectedTag,
+    setSelectedTag,
+    bulkAddTag,
+    setBulkAddTag,
+    allTags,
+    loadUserAccounts,
+  } = useUserAccounts();
+
+  const [splitwiseTagModalOpen, setSplitwiseTagModalOpen] = useState(false);
+  const [bulkAddTagModalOpen, setBulkAddTagModalOpen] = useState(false);
 
   useEffect(() => {
     loadUserAccounts();
@@ -101,31 +113,58 @@ export function Settings() {
       </Typography>
 
       <Typography variant="body2" component="h2" gutterBottom>
-        Select a tag you want to assign to the expenses from this tool
+        Tag to append to expenses
       </Typography>
 
-      {allTags.map((tag) => (
-        <Box
-          key={tag.id}
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <Typography>{tag.name}</Typography>
+      <Stack spacing={2}>
+        <Box>
           <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              setSelectedTag(tag.id);
-            }}
-            disabled={selectedTag?.id === tag.id}
+            variant="outlined"
+            onClick={() => setSplitwiseTagModalOpen(true)}
           >
-            {selectedTag?.id === tag.id ? "Selected" : "Select"}
+            Configure Splitwise-to-Toshl tag
           </Button>
+          {selectedTag && (
+            <Chip
+              label={selectedTag.name}
+              size="small"
+              sx={{ ml: 2 }}
+            />
+          )}
         </Box>
-      ))}
+        <Box>
+          <Button
+            variant="outlined"
+            onClick={() => setBulkAddTagModalOpen(true)}
+          >
+            Configure Bulk Add tag
+          </Button>
+          {bulkAddTag && (
+            <Chip
+              label={bulkAddTag.name}
+              size="small"
+              sx={{ ml: 2 }}
+            />
+          )}
+        </Box>
+      </Stack>
+
+      <TagSelectionModal
+        open={splitwiseTagModalOpen}
+        onClose={() => setSplitwiseTagModalOpen(false)}
+        title="Splitwise-to-Toshl tag"
+        tags={allTags}
+        currentTag={selectedTag}
+        onSave={(id) => setSelectedTag(id)}
+      />
+      <TagSelectionModal
+        open={bulkAddTagModalOpen}
+        onClose={() => setBulkAddTagModalOpen(false)}
+        title="Bulk Add tag"
+        tags={allTags}
+        currentTag={bulkAddTag}
+        onSave={(id) => setBulkAddTag(id)}
+      />
     </Container>
   );
 }

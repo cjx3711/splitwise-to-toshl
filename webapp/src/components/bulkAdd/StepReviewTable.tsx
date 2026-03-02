@@ -4,6 +4,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  IconButton,
   Stack,
   Table,
   TableBody,
@@ -12,12 +13,16 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
 } from "@mui/material";
-import { useMemo } from "react";
+import EditIcon from "@mui/icons-material/Edit";
+import { useMemo, useState } from "react";
 import { ToshlCategory, ToshlTag } from "../../hooks/useAccounts";
 import { BulkExpenseRow } from "./bulkAddTypes";
 import { BulkActionToolbar } from "./BulkActionToolbar";
 import { BulkAddAction } from "../../BulkAdd";
+import { EditDescriptionModal } from "./EditDescriptionModal";
+import { EditAmountModal } from "./EditAmountModal";
 
 interface StepReviewTableProps {
   rows: BulkExpenseRow[];
@@ -34,6 +39,9 @@ export function StepReviewTable({
   allTags,
   dispatch,
 }: StepReviewTableProps) {
+  const [editDescriptionRow, setEditDescriptionRow] = useState<BulkExpenseRow | null>(null);
+  const [editAmountRow, setEditAmountRow] = useState<BulkExpenseRow | null>(null);
+
   const categoryOptions = useMemo(
     () => categories.map((c) => ({ id: c.id, label: c.name })),
     [categories]
@@ -45,6 +53,12 @@ export function StepReviewTable({
   );
 
   const allSelected = rows.length > 0 && selectedIds.size === rows.length;
+
+  const hasUnmatchedCategory = useMemo(() => {
+    return Array.from(selectedIds).some(
+      (id) => rows.find((r) => r._id === id)?.categoryId === null
+    );
+  }, [selectedIds, rows]);
 
   const statusColor = (s: BulkExpenseRow["matchStatus"]) => {
     if (s === "full") return "success";
@@ -60,14 +74,12 @@ export function StepReviewTable({
 
   return (
     <Stack spacing={2}>
-      {selectedIds.size > 0 && (
-        <BulkActionToolbar
-          selectedCount={selectedIds.size}
-          categories={categories}
-          allTags={allTags}
-          dispatch={dispatch}
-        />
-      )}
+      <BulkActionToolbar
+        selectedCount={selectedIds.size}
+        categories={categories}
+        allTags={allTags}
+        dispatch={dispatch}
+      />
 
       <TableContainer>
         <Table size="small" stickyHeader>
@@ -87,7 +99,6 @@ export function StepReviewTable({
               <TableCell>Date</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount</TableCell>
-              <TableCell>Currency</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Tags</TableCell>
               <TableCell>Status</TableCell>
@@ -106,22 +117,31 @@ export function StepReviewTable({
                 </TableCell>
                 <TableCell sx={{ whiteSpace: "nowrap" }}>{row.date}</TableCell>
                 <TableCell>
-                  <TextField
-                    variant="standard"
-                    size="small"
-                    defaultValue={row.description}
-                    onBlur={(e) =>
-                      dispatch({
-                        type: "UPDATE_DESCRIPTION",
-                        id: row._id,
-                        description: e.target.value,
-                      })
-                    }
-                    sx={{ minWidth: 120 }}
-                  />
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                    <Typography variant="body2">{row.description}</Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => setEditDescriptionRow(row)}
+                      aria-label="Edit description"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
                 </TableCell>
-                <TableCell align="right">{row.amount.toFixed(2)}</TableCell>
-                <TableCell>{row.currency}</TableCell>
+                <TableCell align="right">
+                  <Stack direction="row" alignItems="center" spacing={0.5} justifyContent="flex-end">
+                    <Typography variant="body2">
+                      {row.amount.toFixed(2)} {row.currency}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => setEditAmountRow(row)}
+                      aria-label="Edit amount"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                </TableCell>
                 <TableCell>
                   <Autocomplete
                     size="small"
@@ -151,36 +171,45 @@ export function StepReviewTable({
                   />
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", alignItems: "center" }}>
-                    {row.tags.map((tag, idx) => (
-                      <Chip
-                        key={idx}
-                        label={tag.display}
-                        size="small"
-                        color={tag.toshlId ? "default" : "warning"}
-                        onDelete={() =>
-                          dispatch({
-                            type: "BULK_REMOVE_TAG",
-                            rowId: row._id,
-                            tagIndex: idx,
-                          })
-                        }
-                      />
-                    ))}
+                  <Stack spacing={0.5}>
+                    {row.tags.length > 0 && (
+                      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                        {row.tags.map((tag, idx) => (
+                          <Chip
+                            key={idx}
+                            label={tag.display}
+                            size="small"
+                            color={tag.toshlId ? "default" : "warning"}
+                            onDelete={() =>
+                              dispatch({
+                                type: "BULK_REMOVE_TAG",
+                                rowId: row._id,
+                                tagIndex: idx,
+                              })
+                            }
+                          />
+                        ))}
+                      </Box>
+                    )}
                     <Autocomplete
                       size="small"
-                      options={tagOptions}
+                      options={tagOptions.filter(
+                        (opt) => !row.tags.some((t) => t.toshlId === opt.id)
+                      )}
                       getOptionLabel={(o) => o.label}
                       onChange={(_, value) => {
                         if (value) {
-                          dispatch({
-                            type: "SET_ROW_TAGS",
-                            id: row._id,
-                            tags: [
-                              ...row.tags,
-                              { toshlId: value.id, display: value.label },
-                            ],
-                          });
+                          const existingIds = new Set(row.tags.map((t) => t.toshlId));
+                          if (!existingIds.has(value.id)) {
+                            dispatch({
+                              type: "SET_ROW_TAGS",
+                              id: row._id,
+                              tags: [
+                                ...row.tags,
+                                { toshlId: value.id, display: value.label },
+                              ],
+                            });
+                          }
                         }
                       }}
                       value={null}
@@ -193,7 +222,7 @@ export function StepReviewTable({
                         />
                       )}
                     />
-                  </Box>
+                  </Stack>
                 </TableCell>
                 <TableCell>
                   <Chip
@@ -214,10 +243,54 @@ export function StepReviewTable({
         </Button>
         <Button
           variant="contained"
-          onClick={() => dispatch({ type: "SET_STEP", step: 2 })}>
+          onClick={() => dispatch({ type: "SET_STEP", step: 2 })}
+          disabled={selectedIds.size === 0 || hasUnmatchedCategory}
+        >
           Continue
         </Button>
       </Stack>
+
+      {selectedIds.size === 0 && (
+        <Typography variant="body2" color="error">
+          Please select at least one expense to continue.
+        </Typography>
+      )}
+      {selectedIds.size > 0 && hasUnmatchedCategory && (
+        <Typography variant="body2" color="error">
+          Please assign a category to all selected expenses before continuing.
+        </Typography>
+      )}
+
+      <EditDescriptionModal
+        open={editDescriptionRow !== null}
+        onClose={() => setEditDescriptionRow(null)}
+        currentValue={editDescriptionRow?.description ?? ""}
+        onSave={(value) => {
+          if (editDescriptionRow) {
+            dispatch({
+              type: "UPDATE_DESCRIPTION",
+              id: editDescriptionRow._id,
+              description: value,
+            });
+          }
+        }}
+      />
+      <EditAmountModal
+        open={editAmountRow !== null}
+        onClose={() => setEditAmountRow(null)}
+        currentAmount={editAmountRow?.amount ?? 0}
+        currentCurrency={editAmountRow?.currency ?? "USD"}
+        onSave={(amount, currency) => {
+          if (editAmountRow) {
+            dispatch({
+              type: "UPDATE_AMOUNT",
+              id: editAmountRow._id,
+              amount,
+              currency,
+            });
+          }
+        }}
+      />
     </Stack>
   );
 }

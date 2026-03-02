@@ -74,15 +74,10 @@ export function BulkActionToolbar({
       <Stack direction="row" spacing={1} sx={{ ml: "auto" }}>
         <Button
           size="small"
-          color="error"
           variant="outlined"
-          onClick={() => dispatch({ type: "REMOVE_SELECTED_ROWS" })}>
-          Remove Selected
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => dispatch({ type: "DESELECT_ALL" })}>
+          onClick={() => dispatch({ type: "DESELECT_ALL" })}
+          disabled={selectedCount === 0}
+        >
           Deselect All
         </Button>
       </Stack>
