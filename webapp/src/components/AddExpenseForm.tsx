@@ -208,7 +208,7 @@ export function AddExpenseForm({
           <Typography variant="body1" color="" align="right">
             Total: {expense.total_amount} {expense.currency}
           </Typography>
-          <Typography variant="body1" color="primary" align="right">
+          <Typography variant="body1" color={expense.share_amount === 0 ? "error" : "primary"} align="right">
             My Share: {expense.share_amount} {expense.currency}
           </Typography>
         </Box>
@@ -335,7 +335,7 @@ export function AddExpenseForm({
           </Stack>
           <Stack direction={"column"} gap={1} alignItems={"center"}>
             <Button
-              disabled={!selectedCategory || addingExpense}
+              disabled={!selectedCategory || addingExpense || expense.share_amount === 0}
               size="large"
               variant="contained"
               color="primary"

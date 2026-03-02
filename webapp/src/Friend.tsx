@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  CircularProgress,
   Container,
   FormControlLabel,
   Modal,
@@ -8,7 +9,7 @@ import {
   Switch,
   Typography,
 } from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   AccountState,
@@ -21,25 +22,149 @@ import { Expense, ExpenseListItem } from "./components/ExpenseListItem";
 import { SplitwiseFriend } from "./Friends";
 import { format, subDays } from "date-fns";
 
+// --- State & Reducer ---
+
+type State = {
+  friend: SplitwiseFriend | null;
+  expenses: Expense[];
+  latestExpenseDate: string | null;
+  existingEntriesOnToshl: ToshlExpense[];
+  toshlCheckStatus: "idle" | "checking" | "complete";
+  toshlCheckRange: { from: string; to: string } | null;
+  selectedExpense: Expense | null;
+  page: number;
+  showInvolved: boolean;
+};
+
+type Action =
+  | { type: "SET_FRIEND"; friend: SplitwiseFriend }
+  | { type: "PAGE_FETCH_STARTED" }
+  | { type: "SET_EXPENSES"; expenses: Expense[]; latestExpenseDate: string }
+  | { type: "TOSHL_CHECK_STARTED" }
+  | { type: "TOSHL_WINDOW_SCANNING"; range: { from: string; to: string }; entries: ToshlExpense[] }
+  | { type: "TOSHL_CHECK_COMPLETE" }
+  | { type: "SELECT_EXPENSE"; expense: Expense }
+  | { type: "DESELECT_EXPENSE" }
+  | { type: "PREVIOUS_EXPENSE" }
+  | { type: "NEXT_EXPENSE" }
+  | { type: "SET_PAGE"; page: number }
+  | { type: "SET_SHOW_INVOLVED"; show: boolean };
+
+const initialState: State = {
+  friend: null,
+  expenses: [],
+  latestExpenseDate: null,
+  existingEntriesOnToshl: [],
+  toshlCheckStatus: "idle",
+  toshlCheckRange: null,
+  selectedExpense: null,
+  page: 0,
+  showInvolved: true,
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "SET_FRIEND":
+      return { ...state, friend: action.friend };
+
+    case "PAGE_FETCH_STARTED":
+      return {
+        ...state,
+        expenses: [],
+        latestExpenseDate: null,
+        existingEntriesOnToshl: [],
+        toshlCheckStatus: "idle",
+        toshlCheckRange: null,
+      };
+
+    case "SET_EXPENSES":
+      return {
+        ...state,
+        expenses: action.expenses,
+        latestExpenseDate: action.latestExpenseDate,
+      };
+
+    case "TOSHL_CHECK_STARTED":
+      return {
+        ...state,
+        existingEntriesOnToshl: [],
+        toshlCheckStatus: "checking",
+        toshlCheckRange: null,
+      };
+
+    case "TOSHL_WINDOW_SCANNING":
+      return {
+        ...state,
+        toshlCheckRange: action.range,
+        existingEntriesOnToshl: action.entries,
+      };
+
+    case "TOSHL_CHECK_COMPLETE":
+      return { ...state, toshlCheckStatus: "complete" };
+
+    case "SELECT_EXPENSE":
+      return { ...state, selectedExpense: action.expense };
+
+    case "DESELECT_EXPENSE":
+      return { ...state, selectedExpense: null };
+
+    case "PREVIOUS_EXPENSE": {
+      if (!state.selectedExpense) return state;
+      const list = state.showInvolved ? state.expenses.filter(e => e.involved) : state.expenses;
+      const idx = list.findIndex(e => e.id === state.selectedExpense!.id);
+      if (idx <= 0) return state;
+      return { ...state, selectedExpense: list[idx - 1] };
+    }
+
+    case "NEXT_EXPENSE": {
+      if (!state.selectedExpense) return state;
+      const list = state.showInvolved ? state.expenses.filter(e => e.involved) : state.expenses;
+      const idx = list.findIndex(e => e.id === state.selectedExpense!.id);
+      if (idx === -1 || idx === list.length - 1) return state;
+      return { ...state, selectedExpense: list[idx + 1] };
+    }
+
+    case "SET_PAGE":
+      return { ...state, page: action.page };
+
+    case "SET_SHOW_INVOLVED":
+      return { ...state, showInvolved: action.show };
+
+    default:
+      return state;
+  }
+}
+
+// --- Component ---
+
 export function Friend() {
   const { friendId } = useParams();
-  const [friend, setFriend] = useState<SplitwiseFriend | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [latestExpenseDate, setLatestExpenseDate] = useState<string | null>();
-  const [existingEntriesOnToshl, setExistingEntriesOnToshl] = useState<
-    ToshlExpense[]
-  >([]);
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
-  const [selectedExpenseIndex, setSelectedExpenseIndex] = useState<
-    number | null
-  >(null);
-  const [page, setPage] = useState(0);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const {
+    friend,
+    expenses,
+    latestExpenseDate,
+    existingEntriesOnToshl,
+    toshlCheckStatus,
+    toshlCheckRange,
+    selectedExpense,
+    page,
+    showInvolved,
+  } = state;
+
+  const activeList = showInvolved ? expenses.filter(e => e.involved) : expenses;
+  const selectedIdx = selectedExpense ? activeList.findIndex(e => e.id === selectedExpense.id) : -1;
+
   const count = 30;
-  const [showInvolved, setShowInvolved] = useState(true);
+  // Ref keeps the current expenses list accessible inside the Toshl effect
+  // without making it a dependency (which would cause a re-run on every render).
+  const expensesRef = useRef<Expense[]>([]);
 
   const { userAccounts, accountState, loadUserAccounts, selectedTag } =
     useUserAccounts();
   const navigate = useNavigate();
+
+  // Effect: redirect to home if accounts are not configured
   useEffect(() => {
     async function checkUserAccount() {
       if (accountState !== AccountState.SET) {
@@ -47,65 +172,36 @@ export function Friend() {
           navigate("/");
         }
       }
-      return true;
     }
     checkUserAccount();
   }, [accountState, loadUserAccounts, navigate]);
 
+  // Effect: fetch friend details and expenses for the current page
   useEffect(() => {
-    if (!latestExpenseDate || !selectedTag) {
-      return;
-    }
+    if (friendId === undefined) return;
 
-    console.log(
-      "Getting existing entries on Toshl",
-      latestExpenseDate,
-      selectedTag.id
-    );
-    // Get exising entries on Toshl
-    // Date range is latest expense - 100 days
-    const endDate = format(new Date(latestExpenseDate), "yyyy-MM-dd");
-    const startDate = format(
-      subDays(new Date(latestExpenseDate), 100),
-      "yyyy-MM-dd"
-    );
-    // Only get the items with the splitwise tag
-    fetch(
-      `/api/toshl/entries?type=expense&tags=${selectedTag.id}&from=${startDate}&to=${endDate}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("toshlAPIKey")}`,
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        setExistingEntriesOnToshl(data as ToshlExpense[]);
-      });
-  }, [selectedTag, latestExpenseDate]);
+    const controller = new AbortController();
+    const splitwiseAPIKey = localStorage.getItem("splitwiseAPIKey");
 
-  useEffect(() => {
-    if (friendId === undefined) {
-      return;
-    }
+    dispatch({ type: "PAGE_FETCH_STARTED" });
+    expensesRef.current = [];
 
-    // Get friend details
     fetch(`/api/splitwise/v3.0/get_friend/${friendId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("splitwiseAPIKey")}`,
+        Authorization: `Bearer ${splitwiseAPIKey}`,
       },
+      signal: controller.signal,
     })
       .then((res) => res.json())
       .then((data) => {
-        setFriend(data.friend as SplitwiseFriend);
+        dispatch({ type: "SET_FRIEND", friend: data.friend as SplitwiseFriend });
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error(err);
       });
 
-    // Get expenses
     fetch(
       `/api/splitwise/v3.0/get_expenses?friend_id=${friendId}&limit=${count}&offset=${
         page * count
@@ -114,15 +210,19 @@ export function Friend() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("splitwiseAPIKey")}`,
+          Authorization: `Bearer ${splitwiseAPIKey}`,
         },
+        signal: controller.signal,
       }
     )
       .then((res) => res.json())
       .then((data) => {
+        if (controller.signal.aborted) return;
+
         const expensesArr = data.expenses;
-        const normalisedExpenseArray = [];
+        const normalisedExpenseArray: Expense[] = [];
         for (const e of expensesArr) {
+          if (e.deleted_at) continue;
           const expense: Expense = {
             id: e.id,
             category: e.category.name,
@@ -156,52 +256,100 @@ export function Friend() {
           }
           normalisedExpenseArray.push(expense);
         }
-        setExpenses(normalisedExpenseArray);
-        // Find the latest expense date
-        const latestExpenseDate = normalisedExpenseArray.reduce(
+
+        expensesRef.current = normalisedExpenseArray;
+
+        const latestExpense = normalisedExpenseArray.reduce(
           (prev, current) => (prev.date > current.date ? prev : current)
         );
-
-        setLatestExpenseDate(latestExpenseDate.date);
+        dispatch({
+          type: "SET_EXPENSES",
+          expenses: normalisedExpenseArray,
+          latestExpenseDate: latestExpense.date,
+        });
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error(err);
       });
+
+    return () => controller.abort();
   }, [count, friendId, page, userAccounts.splitwise.id]);
+
+  // Effect: scan Toshl for existing entries covering all expenses on the current page,
+  // stepping backwards in 100-day windows until the earliest expense date is covered.
+  useEffect(() => {
+    if (!latestExpenseDate || !selectedTag || expensesRef.current.length === 0) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const toshlAPIKey = localStorage.getItem("toshlAPIKey");
+    const earliestExpenseDate = expensesRef.current.reduce(
+      (prev, current) => (prev.date < current.date ? prev : current)
+    ).date;
+
+    dispatch({ type: "TOSHL_CHECK_STARTED" });
+
+    async function fetchToshlEntries() {
+      const endDate = format(new Date(latestExpenseDate!), "yyyy-MM-dd");
+      let windowEnd = endDate;
+      let allEntries: ToshlExpense[] = [];
+
+      while (true) {
+        const windowStart = format(subDays(new Date(windowEnd), 100), "yyyy-MM-dd");
+
+        const res = await fetch(
+          `/api/toshl/entries?type=expense&tags=${selectedTag!.id}&from=${windowStart}&to=${windowEnd}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${toshlAPIKey}`,
+            },
+            signal: controller.signal,
+          }
+        );
+
+        const data = await res.json();
+
+        // Guard: discard results if this effect was cleaned up while the fetch was in flight
+        if (controller.signal.aborted) return;
+
+        allEntries = [...allEntries, ...(data as ToshlExpense[])];
+        dispatch({
+          type: "TOSHL_WINDOW_SCANNING",
+          range: { from: windowStart, to: endDate },
+          entries: allEntries,
+        });
+
+        // Stop once the window covers the earliest expense on this page
+        if (windowStart <= earliestExpenseDate) break;
+
+        // Step the window back one day before the current start
+        windowEnd = format(subDays(new Date(windowStart), 1), "yyyy-MM-dd");
+      }
+
+      dispatch({ type: "TOSHL_CHECK_COMPLETE" });
+    }
+
+    fetchToshlEntries().catch((err) => {
+      if (err.name !== "AbortError") {
+        console.error("Toshl fetch error:", err);
+      }
+    });
+
+    return () => controller.abort();
+  }, [selectedTag, latestExpenseDate]);
 
   const checkIfExpenseExistsOnToshl = useCallback(
     (expense: Expense | null) => {
-      if (!existingEntriesOnToshl) {
-        return false;
-      }
-      if (!expense) {
-        return false;
-      }
+      if (!existingEntriesOnToshl || !expense) return false;
       return existingEntriesOnToshl.some(
         (e) => `${e.extra.expense_id}` === `${expense.id}`
       );
     },
     [existingEntriesOnToshl]
   );
-
-  const previousExpense = useCallback(() => {
-    if (selectedExpenseIndex === null) {
-      return;
-    }
-    if (selectedExpenseIndex === 0) {
-      return;
-    }
-    setSelectedExpenseIndex(selectedExpenseIndex - 1);
-    setSelectedExpense(expenses[selectedExpenseIndex - 1]);
-  }, [selectedExpenseIndex, expenses]);
-
-  const nextExpense = useCallback(() => {
-    if (selectedExpenseIndex === null) {
-      return;
-    }
-    if (selectedExpenseIndex === expenses.length - 1) {
-      return;
-    }
-    setSelectedExpenseIndex(selectedExpenseIndex + 1);
-    setSelectedExpense(expenses[selectedExpenseIndex + 1]);
-  }, [selectedExpenseIndex, expenses]);
 
   return (
     <Container component="main" sx={{ mt: 8, mb: 2 }} maxWidth="sm">
@@ -228,6 +376,15 @@ export function Friend() {
             )}
           </Typography>
           <hr />
+          {toshlCheckStatus !== "idle" && toshlCheckRange && (
+            <Typography
+              variant="caption"
+              sx={{ color: toshlCheckStatus === "complete" ? "success.main" : "text.secondary" }}>
+              {toshlCheckStatus === "checking"
+                ? `Checking Toshl: ${toshlCheckRange.from} – ${toshlCheckRange.to}...`
+                : `Toshl check complete: ${toshlCheckRange.from} – ${toshlCheckRange.to} (${existingEntriesOnToshl.length} entries found)`}
+            </Typography>
+          )}
           <Stack
             justifyContent={"space-between"}
             direction={"row"}
@@ -243,7 +400,7 @@ export function Friend() {
                 <Switch
                   value={showInvolved}
                   onChange={(e) => {
-                    setShowInvolved(e.target.checked);
+                    dispatch({ type: "SET_SHOW_INVOLVED", show: e.target.checked });
                   }}
                   defaultChecked
                 />
@@ -252,31 +409,16 @@ export function Friend() {
             />
           </Stack>
 
-          {showInvolved
-            ? expenses
-                .filter((e) => e.involved)
-                .map((expense, i) => (
-                  <ExpenseListItem
-                    key={expense.description + expense.date}
-                    expense={expense}
-                    selectExpense={() => {
-                      setSelectedExpense(expense);
-                      setSelectedExpenseIndex(i);
-                    }}
-                    toshlExists={checkIfExpenseExistsOnToshl(expense)}
-                  />
-                ))
-            : expenses.map((expense, i) => (
-                <ExpenseListItem
-                  key={expense.description + expense.date}
-                  expense={expense}
-                  selectExpense={() => {
-                    setSelectedExpense(expense);
-                    setSelectedExpenseIndex(i);
-                  }}
-                  toshlExists={checkIfExpenseExistsOnToshl(expense)}
-                />
-              ))}
+          {activeList.map((expense) => (
+            <ExpenseListItem
+              key={expense.description + expense.date}
+              expense={expense}
+              selectExpense={() => {
+                dispatch({ type: "SELECT_EXPENSE", expense });
+              }}
+              toshlExists={checkIfExpenseExistsOnToshl(expense)}
+            />
+          ))}
 
           <Box
             sx={{
@@ -288,43 +430,33 @@ export function Friend() {
             <Button
               variant="contained"
               color="primary"
-              onClick={() => {
-                setPage(page - 1);
-              }}
-              disabled={page === 0}>
+              onClick={() => dispatch({ type: "SET_PAGE", page: page - 1 })}
+              disabled={page === 0 || toshlCheckStatus === "checking"}>
               Previous
             </Button>
             <Button
               variant="contained"
               color="primary"
-              onClick={() => {
-                setPage(page + 1);
-              }}>
+              onClick={() => dispatch({ type: "SET_PAGE", page: page + 1 })}
+              disabled={toshlCheckStatus === "checking"}>
               Next
             </Button>
           </Box>
         </Box>
       ) : (
-        <Typography variant="h2" component="h1" gutterBottom>
-          Loading...
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+          <CircularProgress />
+        </Box>
       )}
       <Modal open={!!selectedExpense}>
         <AddExpenseForm
           expense={selectedExpense}
           toshlExists={checkIfExpenseExistsOnToshl(selectedExpense)}
-          closeModal={() => {
-            setSelectedExpense(null);
-          }}
-          previousExpense={previousExpense}
-          nextExpense={nextExpense}
-          hasNext={
-            selectedExpenseIndex !== null &&
-            selectedExpenseIndex < expenses.length - 1
-          }
-          hasPrevious={
-            selectedExpenseIndex !== null && selectedExpenseIndex > 0
-          }
+          closeModal={() => dispatch({ type: "DESELECT_EXPENSE" })}
+          previousExpense={() => dispatch({ type: "PREVIOUS_EXPENSE" })}
+          nextExpense={() => dispatch({ type: "NEXT_EXPENSE" })}
+          hasNext={selectedIdx !== -1 && selectedIdx < activeList.length - 1}
+          hasPrevious={selectedIdx > 0}
         />
       </Modal>
     </Container>

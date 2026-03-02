@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  CircularProgress,
   Container,
   Stack,
   styled,
@@ -31,7 +32,7 @@ const FriendRow = styled(Box)`
   border: 1px solid #888;
 `;
 export function Friends() {
-  const [friends, setFriends] = useState<SplitwiseFriend[]>([]);
+  const [friends, setFriends] = useState<SplitwiseFriend[] | null>(null);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const { accountState, loadUserAccounts } = useUserAccounts();
@@ -86,7 +87,11 @@ export function Friends() {
         sx={{ mb: 1 }}
       />
       <Stack padding={2} spacing={1}>
-        {friends.filter((friend) => {
+        {friends === null ? (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : friends.filter((friend) => {
           const name = [friend.first_name, friend.last_name].filter(Boolean).join(" ").toLowerCase();
           return name.includes(search.toLowerCase());
         }).map((friend) => (
