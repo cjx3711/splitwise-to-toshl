@@ -16,6 +16,7 @@ import { UserAccountsProvider } from "./hooks/useAccounts.tsx";
 import { ThemeModeProvider, useThemeMode } from "./hooks/useThemeMode.tsx";
 import { Settings } from "./Settings.tsx";
 import { BulkAdd } from "./BulkAdd.tsx";
+import { SplitwiseBulkAdd } from "./SplitwiseBulkAdd.tsx";
 import About from "./About.tsx";
 
 const router = createBrowserRouter([
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
   {
     path: "/bulk-add",
     element: <BulkAdd />,
+  },
+  {
+    path: "/splitwise-bulk-add",
+    element: <SplitwiseBulkAdd />,
   },
   {
     path: "*",

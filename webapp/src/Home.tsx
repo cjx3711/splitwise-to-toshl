@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
+import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { AccountState, useUserAccounts } from "./hooks/useAccounts";
 
 function Home() {
@@ -153,7 +154,7 @@ function Home() {
           </Card>
         </Grid>
 
-        {/* Card 2 — Bulk Add to Splitwise */}
+        {/* Card 2 — Bulk Add to Toshl */}
         <Grid item xs={12} sm={6}>
           <Card variant="outlined" sx={{ height: "100%" }}>
             <CardContent>
@@ -171,6 +172,30 @@ function Home() {
                 size="small"
                 disabled={!accountsReady}
                 onClick={() => navigate("/bulk-add")}>
+                Open Tool
+              </Button>
+            </CardActions>
+          </Card>
+        </Grid>
+
+        {/* Card 3 — Bulk Add to Splitwise */}
+        <Grid item xs={12} sm={6}>
+          <Card variant="outlined" sx={{ height: "100%" }}>
+            <CardContent>
+              <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                <GroupAddIcon color="primary" fontSize="large" />
+                <Typography variant="h6">Bulk Add to Splitwise</Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                Paste a CSV to bulk-add shared expenses into Splitwise.
+              </Typography>
+            </CardContent>
+            <CardActions sx={{ px: 2, pb: 2 }}>
+              <Button
+                variant="contained"
+                size="small"
+                disabled={!accountsReady}
+                onClick={() => navigate("/splitwise-bulk-add")}>
                 Open Tool
               </Button>
             </CardActions>
