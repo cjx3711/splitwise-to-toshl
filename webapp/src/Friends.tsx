@@ -4,6 +4,7 @@ import {
   Container,
   Stack,
   styled,
+  TextField,
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -31,6 +32,7 @@ const FriendRow = styled(Box)`
 `;
 export function Friends() {
   const [friends, setFriends] = useState<SplitwiseFriend[]>([]);
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const { accountState, loadUserAccounts } = useUserAccounts();
   useEffect(() => {
@@ -74,8 +76,20 @@ export function Friends() {
       <Typography variant="h5" component="h2" gutterBottom>
         {"Select who you want to transfer transactions for."}
       </Typography>
+      <TextField
+        label="Search friends"
+        variant="outlined"
+        size="small"
+        fullWidth
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        sx={{ mb: 1 }}
+      />
       <Stack padding={2} spacing={1}>
-        {friends.map((friend) => (
+        {friends.filter((friend) => {
+          const name = [friend.first_name, friend.last_name].filter(Boolean).join(" ").toLowerCase();
+          return name.includes(search.toLowerCase());
+        }).map((friend) => (
           <FriendRow key={friend.id}>
             <Typography variant="body1" component="p">
               {[friend.first_name, friend.last_name].filter(Boolean).join(", ")}
