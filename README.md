@@ -4,6 +4,11 @@ This is a webapp that will take your expenses in splitwise and automatically inp
 
 Originally this was a command line application, but since python 3.12, something broke and I decided to rewrite it in a more modern way.
 
+# Repository Structure
+
+- `splitwise-to-toshl/` — The main web application (Vite + React + TypeScript + MUI + Express)
+- `old_python/` — Legacy CLI tool written in Python. No longer actively maintained but kept for reference. See its own [README](old_python/README.md) for usage instructions.
+
 # Stack
 
 Vite + React + TypeScript + MUI + Express
@@ -81,7 +86,7 @@ Save the docker image
 
 Upload the docker image to the server
 
-`rsync -azP splitwise-to-toshl.tar user@your-server.com:/root/projects/splitwise-to-toshl/`
+`rsync -azP splitwise-to-toshl.tar <user>@<your-server>:/path/to/projects/splitwise-to-toshl/`
 
 Delete the tar file
 
