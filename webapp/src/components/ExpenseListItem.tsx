@@ -27,7 +27,8 @@ export const ExpenseListItem = ({
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        borderBottom: "1px solid #ccc",
+        borderBottom: 1,
+        borderColor: "divider",
         padding: "1rem",
       }}>
       <Box

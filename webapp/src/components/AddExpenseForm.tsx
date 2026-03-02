@@ -302,7 +302,7 @@ export function AddExpenseForm({
             </Button>
             <Typography
               variant="caption"
-              color={"grey"}
+              color="text.secondary"
               sx={{
                 textTransform: "uppercase",
               }}>
@@ -326,7 +326,7 @@ export function AddExpenseForm({
             </Button>
             <Typography
               variant="caption"
-              color={"grey"}
+              color="text.secondary"
               sx={{
                 textTransform: "uppercase",
               }}>
@@ -351,7 +351,7 @@ export function AddExpenseForm({
             </Button>
             <Typography
               variant="caption"
-              color={"grey"}
+              color="text.secondary"
               sx={{
                 ml: 2,
                 textTransform: "uppercase",

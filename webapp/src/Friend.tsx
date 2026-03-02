@@ -360,9 +360,10 @@ export function Friend() {
           </Typography>
           <Typography variant="h5" component="h2" gutterBottom>
             {friend.balance[0]?.amount && friend.balance[0]?.amount > 0 && (
-              <span
-                style={{
-                  color: "grey",
+              <Box
+                component="span"
+                sx={{
+                  color: "text.secondary",
                   marginLeft: "0.5rem",
                 }}>
                 (
@@ -372,7 +373,7 @@ export function Friend() {
                   )
                   .join(", ")}
                 )
-              </span>
+              </Box>
             )}
           </Typography>
           <hr />

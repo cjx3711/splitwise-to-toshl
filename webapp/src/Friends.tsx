@@ -22,15 +22,15 @@ export type SplitwiseFriend = {
   }[];
 };
 
-const FriendRow = styled(Box)`
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid #888;
-`;
+const FriendRow = styled(Box)(({ theme }) => ({
+  padding: "0.5rem",
+  display: "flex",
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 10,
+  border: `1px solid ${theme.palette.divider}`,
+}));
 export function Friends() {
   const [friends, setFriends] = useState<SplitwiseFriend[] | null>(null);
   const [search, setSearch] = useState("");
@@ -99,9 +99,10 @@ export function Friends() {
             <Typography variant="body1" component="p">
               {[friend.first_name, friend.last_name].filter(Boolean).join(", ")}
               {friend.balance[0]?.amount && friend.balance[0]?.amount > 0 && (
-                <span
-                  style={{
-                    color: "grey",
+                <Box
+                  component="span"
+                  sx={{
+                    color: "text.secondary",
                     marginLeft: "0.5rem",
                   }}>
                   (
@@ -111,7 +112,7 @@ export function Friends() {
                     )
                     .join(", ")}
                   )
-                </span>
+                </Box>
               )}
             </Typography>
             <Button
