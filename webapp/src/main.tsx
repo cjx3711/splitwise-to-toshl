@@ -16,11 +16,16 @@ import { UserAccountsProvider } from "./hooks/useAccounts.tsx";
 import { ThemeModeProvider, useThemeMode } from "./hooks/useThemeMode.tsx";
 import { Settings } from "./Settings.tsx";
 import { BulkAdd } from "./BulkAdd.tsx";
+import About from "./About.tsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Home />,
+  },
+  {
+    path: "/about",
+    element: <About />,
   },
   {
     path: "/settings",
@@ -50,46 +55,43 @@ function App() {
   return (
     <Stack
       sx={{
-        margin: "0 auto",
-        textAlign: "center",
         minHeight: "100vh",
       }}>
       <AppBar position="static">
         <Stack
           direction="row"
-          justifyContent="center"
+          justifyContent="space-between"
           alignItems="center"
-          spacing={2}>
-          <Stack
-            sx={{
-              width: "100%",
-              maxWidth: "960px",
-              padding: "1rem 1rem",
-            }}
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            spacing={2}>
-            <Typography variant="h6" component="div">
+          sx={{
+            px: 3,
+            py: 2,
+          }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            <a
+              href="/"
+              style={{ textDecoration: "none", color: "inherit" }}>
+              CJX3711's Finance Toolkit
+            </a>
+          </Typography>
+
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Typography variant="body2">
               <a
-                href="/"
+                href="/about"
                 style={{ textDecoration: "none", color: "inherit" }}>
-                Splitwise to Toshl
+                About
               </a>
             </Typography>
-
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <IconButton color="inherit" onClick={toggleThemeMode}>
-                {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
-              </IconButton>
-              <Typography variant="h6" component="div">
-                <a
-                  href="/settings"
-                  style={{ textDecoration: "none", color: "inherit" }}>
-                  Settings
-                </a>
-              </Typography>
-            </Stack>
+            <Typography variant="body2">
+              <a
+                href="/settings"
+                style={{ textDecoration: "none", color: "inherit" }}>
+                Settings
+              </a>
+            </Typography>
+            <IconButton color="inherit" onClick={toggleThemeMode} sx={{ ml: 1 }}>
+              {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
           </Stack>
         </Stack>
       </AppBar>

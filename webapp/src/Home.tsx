@@ -1,6 +1,6 @@
 import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -43,16 +43,39 @@ function Home() {
   const accountsReady = accountState === AccountState.SET;
 
   return (
-    <Container component="main" sx={{ mt: 6, mb: 4 }} maxWidth="md">
+    <Container component="main" sx={{ mt: 4, mb: 4 }} maxWidth="md">
       {/* Hero section */}
-      <Box sx={{ mb: 4, textAlign: "center" }}>
-        <img src="/logo.png" alt="logo" width={80} height={80} />
-        <Typography variant="h3" component="h1" gutterBottom sx={{ mt: 1 }}>
-          Finance Toolkit
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          Your personal finance toolkit — built on top of Toshl and Splitwise.
-        </Typography>
+      <Box sx={{ mb: 6 }}>
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+          <img src="/logo.png" alt="logo" width={60} height={60} />
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+            CJX3711's Finance Toolkit
+          </Typography>
+        </Stack>
+        <Stack spacing={1}>
+          <Typography variant="body1" color="text.secondary" component="div">
+            My Personal Finance Toolkit. Sync Splitwise with Toshl and use AI to
+            extract expenses from receipts and bank CSVs.{" "}
+            <Link to="/about" style={{ color: "inherit", fontWeight: 500 }}>
+              About
+            </Link>
+          </Typography>
+          <Typography variant="body2" color="text.secondary" component="div">
+            No data is stored on the server—everything is stored locally. The
+            server is just a proxy.{" "}
+            <a
+              href="https://github.com/cjx3711/splitwise-to-toshl"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "inherit",
+                fontWeight: 500,
+                textDecoration: "none",
+              }}>
+              Open source
+            </a>
+          </Typography>
+        </Stack>
       </Box>
 
       {/* Account status bar */}
@@ -60,7 +83,6 @@ function Home() {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
           gap: 1,
           mb: 4,
           flexWrap: "wrap",
