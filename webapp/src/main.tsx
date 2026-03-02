@@ -15,6 +15,7 @@ import { Friends } from "./Friends.tsx";
 import { UserAccountsProvider } from "./hooks/useAccounts.tsx";
 import { ThemeModeProvider, useThemeMode } from "./hooks/useThemeMode.tsx";
 import { Settings } from "./Settings.tsx";
+import { BulkAdd } from "./BulkAdd.tsx";
 
 const router = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
   {
     path: "/friend/:friendId",
     element: <Friend />,
+  },
+  {
+    path: "/bulk-add",
+    element: <BulkAdd />,
   },
   {
     path: "*",
