@@ -35,6 +35,7 @@ export type BulkAddAction =
   | { type: "TOGGLE_SELECT"; id: string }
   | { type: "SELECT_ALL" }
   | { type: "DESELECT_ALL" }
+  | { type: "INVERT_SELECTION" }
   | { type: "UPDATE_DESCRIPTION"; id: string; description: string }
   | { type: "UPDATE_AMOUNT"; id: string; amount: number; currency: string }
   | {
@@ -117,6 +118,13 @@ function reducer(state: BulkAddState, action: BulkAddAction): BulkAddState {
 
     case "DESELECT_ALL":
       return { ...state, selectedIds: new Set() };
+
+    case "INVERT_SELECTION": {
+      const inverted = new Set(
+        state.rows.filter((r) => !state.selectedIds.has(r._id)).map((r) => r._id)
+      );
+      return { ...state, selectedIds: inverted };
+    }
 
     case "UPDATE_DESCRIPTION":
       return {

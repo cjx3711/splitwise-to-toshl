@@ -76,6 +76,8 @@ export function StepReviewTable({
     <Stack spacing={2}>
       <BulkActionToolbar
         selectedCount={selectedIds.size}
+        rows={rows}
+        selectedIds={selectedIds}
         categories={categories}
         allTags={allTags}
         dispatch={dispatch}

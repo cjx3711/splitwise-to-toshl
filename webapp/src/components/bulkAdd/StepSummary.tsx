@@ -12,10 +12,29 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { BulkAddAction } from "../../BulkAdd";
 import { BulkExpenseRow } from "./bulkAddTypes";
 import { useUserAccounts } from "../../hooks/useAccounts";
+
+function rowsToCsv(rows: BulkExpenseRow[]): string {
+  const header = "date,description,amount,currency,category,tags";
+  const lines = rows.map((r) => {
+    const tags = r.tags.map((t) => t.display).join("|");
+    return `${r.date},${r.description},${r.amount},${r.currency},${r.categoryDisplay},${tags}`;
+  });
+  return [header, ...lines].join("\n");
+}
+
+function downloadCsv(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 interface StepSummaryProps {
   rows: BulkExpenseRow[];
@@ -125,6 +144,17 @@ export function StepSummary({
     setSubmitting(false);
   };
 
+  const unprocessedRows = useMemo(() => {
+    const submittedIds = new Set(rowsToSubmit.map((r) => r._id));
+    return rows.filter((r) => !submittedIds.has(r._id));
+  }, [rows, rowsToSubmit]);
+
+  const handleDownloadUnprocessed = useCallback(() => {
+    if (unprocessedRows.length === 0) return;
+    const csv = rowsToCsv(unprocessedRows);
+    downloadCsv(csv, "unprocessed_expenses.csv");
+  }, [unprocessedRows]);
+
   const progressPercent =
     progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
 
@@ -207,6 +237,13 @@ export function StepSummary({
         </Alert>
       )}
 
+      {submitResult && unprocessedRows.length > 0 && (
+        <Alert severity="info">
+          {unprocessedRows.length} expense(s) were not processed (unselected or
+          failed duplicate check).
+        </Alert>
+      )}
+
       <Stack direction="row" spacing={2}>
         {!submitResult && (
           <>
@@ -230,12 +267,19 @@ export function StepSummary({
           </>
         )}
         {submitResult && (
-          <Button
-            variant="contained"
-            onClick={() => dispatch({ type: "SET_STEP", step: 0 })}
-          >
-            Done
-          </Button>
+          <>
+            <Button
+              variant="contained"
+              onClick={() => dispatch({ type: "SET_STEP", step: 0 })}
+            >
+              Done
+            </Button>
+            {unprocessedRows.length > 0 && (
+              <Button variant="outlined" onClick={handleDownloadUnprocessed}>
+                Download unprocessed CSV ({unprocessedRows.length})
+              </Button>
+            )}
+          </>
         )}
       </Stack>
     </Stack>

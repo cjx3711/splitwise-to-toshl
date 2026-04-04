@@ -82,6 +82,8 @@ export function StepSwReview({
     <Stack spacing={2}>
       <SwBulkActionToolbar
         selectedCount={selectedIds.size}
+        rows={rows}
+        selectedIds={selectedIds}
         categories={categories}
         friends={friends}
         dispatch={dispatch}

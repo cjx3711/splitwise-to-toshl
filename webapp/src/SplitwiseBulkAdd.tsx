@@ -36,6 +36,7 @@ export type SwBulkAddAction =
   | { type: "SW_TOGGLE_SELECT"; id: string }
   | { type: "SW_SELECT_ALL" }
   | { type: "SW_DESELECT_ALL" }
+  | { type: "SW_INVERT_SELECTION" }
   | { type: "SW_UPDATE_DESCRIPTION"; id: string; description: string }
   | { type: "SW_UPDATE_AMOUNT"; id: string; amount: number; currency: string }
   | {
@@ -139,6 +140,13 @@ function reducer(state: SwBulkAddState, action: SwBulkAddAction): SwBulkAddState
 
     case "SW_DESELECT_ALL":
       return { ...state, selectedIds: new Set() };
+
+    case "SW_INVERT_SELECTION": {
+      const inverted = new Set(
+        state.rows.filter((r) => !state.selectedIds.has(r._id)).map((r) => r._id)
+      );
+      return { ...state, selectedIds: inverted };
+    }
 
     case "SW_UPDATE_DESCRIPTION":
       return {

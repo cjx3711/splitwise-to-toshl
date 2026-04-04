@@ -2,16 +2,30 @@ import { Autocomplete, Button, Paper, Stack, TextField, Typography } from "@mui/
 import { useMemo } from "react";
 import { ToshlCategory, ToshlTag } from "../../hooks/useAccounts";
 import { BulkAddAction } from "../../BulkAdd";
+import { BulkExpenseRow } from "./bulkAddTypes";
 
 interface BulkActionToolbarProps {
   selectedCount: number;
+  rows: BulkExpenseRow[];
+  selectedIds: Set<string>;
   categories: ToshlCategory[];
   allTags: ToshlTag[];
   dispatch: React.Dispatch<BulkAddAction>;
 }
 
+function rowsToCsv(rows: BulkExpenseRow[]): string {
+  const header = "date,description,amount,currency,category,tags";
+  const lines = rows.map((r) => {
+    const tags = r.tags.map((t) => t.display).join("|");
+    return `${r.date},${r.description},${r.amount},${r.currency},${r.categoryDisplay},${tags}`;
+  });
+  return [header, ...lines].join("\n");
+}
+
 export function BulkActionToolbar({
   selectedCount,
+  rows,
+  selectedIds,
   categories,
   allTags,
   dispatch,
@@ -72,6 +86,26 @@ export function BulkActionToolbar({
       />
 
       <Stack direction="row" spacing={1} sx={{ ml: "auto" }}>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => dispatch({ type: "INVERT_SELECTION" })}
+        >
+          Invert Selection
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => {
+            const selected = rows.filter((r) => selectedIds.has(r._id));
+            if (selected.length === 0) return;
+            const csv = rowsToCsv(selected);
+            navigator.clipboard.writeText(csv);
+          }}
+          disabled={selectedCount === 0}
+        >
+          Copy Selection as CSV
+        </Button>
         <Button
           size="small"
           variant="outlined"

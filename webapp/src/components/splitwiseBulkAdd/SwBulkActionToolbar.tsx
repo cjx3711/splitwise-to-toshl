@@ -1,5 +1,6 @@
 import {
   Autocomplete,
+  Button,
   MenuItem,
   Paper,
   Stack,
@@ -9,10 +10,12 @@ import {
 import { useMemo } from "react";
 import { SplitwiseFriend } from "../../Friends";
 import { SwBulkAddAction } from "../../SplitwiseBulkAdd";
-import { SwCategory, SplitType } from "./splitwiseBulkAddTypes";
+import { SwCategory, SplitType, SwBulkExpenseRow } from "./splitwiseBulkAddTypes";
 
 interface SwBulkActionToolbarProps {
   selectedCount: number;
+  rows: SwBulkExpenseRow[];
+  selectedIds: Set<string>;
   categories: SwCategory[];
   friends: SplitwiseFriend[];
   dispatch: React.Dispatch<SwBulkAddAction>;
@@ -25,8 +28,18 @@ const SPLIT_OPTIONS: { value: SplitType; label: string }[] = [
   { value: "i_owe_them_all", label: "I owe other party everything" },
 ];
 
+function swRowsToCsv(rows: SwBulkExpenseRow[]): string {
+  const header = "date,description,amount,currency,category";
+  const lines = rows.map((r) =>
+    `${r.date},${r.description},${r.amount},${r.currency},${r.categoryDisplay}`
+  );
+  return [header, ...lines].join("\n");
+}
+
 export function SwBulkActionToolbar({
   selectedCount,
+  rows,
+  selectedIds,
   categories,
   friends,
   dispatch,
@@ -127,6 +140,26 @@ export function SwBulkActionToolbar({
       </TextField>
 
       <Stack direction="row" spacing={1} sx={{ ml: "auto" }}>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => dispatch({ type: "SW_INVERT_SELECTION" })}
+        >
+          Invert Selection
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => {
+            const selected = rows.filter((r) => selectedIds.has(r._id));
+            if (selected.length === 0) return;
+            const csv = swRowsToCsv(selected);
+            navigator.clipboard.writeText(csv);
+          }}
+          disabled={selectedCount === 0}
+        >
+          Copy Selection as CSV
+        </Button>
       </Stack>
     </Paper>
   );

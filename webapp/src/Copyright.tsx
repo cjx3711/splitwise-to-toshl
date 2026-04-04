@@ -10,7 +10,7 @@ export function Copyright() {
       {new Date().getFullYear()}
       {"."}
       <Typography variant="caption" marginLeft={2}>
-        v2.0.0
+        v2.1.0
       </Typography>
     </Typography>
   );
